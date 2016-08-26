@@ -150,6 +150,30 @@ data(wrld_simpl)
 plot(wrld_simpl)
 points(coordinates(plot_data), cex=0.1, col="red", pch=16)
 
+# cartogramme 
+
+library(Rcartogram)
+library(getcartr)
+library(fftw)
+
+proj4string(wrld_simpl) <- proj4string(plot_data)
+overRes <- over(plot_data,wrld_simpl)
+NbplotCountry <- table(overRes$ISO2)
+IdCountry <- match(wrld_simpl@data$ISO2,names(NbplotCountry))
+wrld_simpl@data$NbPlot <- NbplotCountry[IdCountry]
+wrld_simpl@proj4string <- CRS(as.character(NA))
+
+tiff("carto_sPlot1.tiff",width = 1000, height = 1000, pointsize = 40)
+sPlot.carto.1<- quick.carto(wrld_simpl, wrld_simpl@data$NbPlot+1, blur = 1)
+spplot(sPlot.carto.1["NbPlot"])
+dev.off()
+
+tiff("carto_sPlot2.tiff",width = 1000, height = 1000, pointsize = 40)
+sPlot.carto.2<- quick.carto(wrld_simpl, 1/(wrld_simpl@data$NbPlot+1), blur = 1)
+spplot(sPlot.carto.2["NbPlot"])
+dev.off()
+
+
 # Importing the functional biome classification from Higgins et al. (2016)
 setwd(paste(rootpath, "/Higgins_al_GCB_functional_biomes", sep = ""))
 biom_nc <- nc_open("veg_mean.nc")
