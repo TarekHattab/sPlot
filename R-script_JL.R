@@ -11,26 +11,26 @@ library(hexbin)
 rootpath <- "C:/Users/Admin/Desktop/sPlot2.0 database 08.08.2016"
 setwd(rootpath)
 
-# Importing the sPlot header data file containing plot (relevé) information
+# Importing the sPlot header data file containing plot (relevÃ©) information
 plot_data <- read.csv("data/sPLOT.csv", sep=";", na.strings=c("", "NA"))
 str(plot_data)
 plot_data <- plot_data[, c(1:3)]
 names(plot_data) <- c("plot_id", "plot_lon", "plot_lat")
-any(is.na(plot_data)) # FALSE: all relevés have coordinates
-str(plot_data) # 1117382 relevés
+any(is.na(plot_data)) # FALSE: all relevÃ©s have coordinates
+str(plot_data) # 1117382 relevÃ©s
 
-# Importing the sPlot species data file that contains the composition and the relative cover of each species for each relevé
+# Importing the sPlot species data file that contains the composition and the relative cover of each species for each relevÃ©
 sp_data <- read.csv("data/plots_without_unified_cover_scales_20160120a.csv")
 str(sp_data) # 24241941 occurrences
-length(unique(sp_data$PlotObservationID)) # 1117940 relevés
-length(unique(sp_data$PlotObservationID))-length(unique(plot_data$plot_id) # 558 relevés in sp_data but missing from plot_data
+length(unique(sp_data$PlotObservationID)) # 1117940 relevÃ©s
+length(unique(sp_data$PlotObservationID))-length(unique(plot_data$plot_id) # 558 relevÃ©s in sp_data but missing from plot_data
 posit <- match(sp_data$PlotObservationID, plot_data$plot_id)
-any(is.na(posit)) # TRUE: some relevés (n = 558) in sp_data are not in plot_data
-length(sp_data$PlotObservationID[is.na(posit)]) # 11369 rows in sp_data corresponding to the species lists of the 558 relevés missing from plot_data
+any(is.na(posit)) # TRUE: some relevÃ©s (n = 558) in sp_data are not in plot_data
+length(sp_data$PlotObservationID[is.na(posit)]) # 11369 rows in sp_data corresponding to the species lists of the 558 relevÃ©s missing from plot_data
 sp_data <- sp_data[is.finite(posit), ] # 24230572 occurrences
-length(unique(sp_data$PlotObservationID)) # 1117382 relevés
+length(unique(sp_data$PlotObservationID)) # 1117382 relevÃ©s
 posit <- match(sp_data$PlotObservationID, plot_data$plot_id)
-any(is.na(posit)) # FALSE: all relevés in sp_data are also in plot_data
+any(is.na(posit)) # FALSE: all relevÃ©s in sp_data are also in plot_data
 
 # Importing the sPlot taxonomic backbone
 load("data/backbone.v.2.splot.try3.Rdata")
@@ -78,30 +78,30 @@ length(which(sp_data$sp_name=="Algae")) # 905 occurrences
 any(is.na(sp_data$sp_name)) # TRUE: some species (n = 20376) are unidentified 
 length(sp_data$sp_name[is.na(sp_data$sp_name)]) # 20376 non identified species
 sp_data <- sp_data[is.finite(posit), ] # 21879465 occurrences
-length(unique(sp_data$plot_id)) #  1113833 relevés with taxa all identified at the species level
+length(unique(sp_data$plot_id)) #  1113833 relevÃ©s with taxa all identified at the species level
 posit <- match(sp_data$sp_name, trait_data$sp_name)
 length(posit[is.finite(posit)]) # 18988700 occurrences out of 21879465 (i.e. about 87%) in sp_data with trait data
 
-# Adjusting plot_data to delete all relevés that are only made of unidentified species names 
+# Adjusting plot_data to delete all relevÃ©s that are only made of unidentified species names 
 posit <- match(plot_data$plot_id, sp_data$plot_id)
-any(is.na(posit)) # TRUE: some relevés (n = 3549) in plot_data are not in sp_data anymore
-length(plot_data$plot_id[is.na(posit)]) # 3549 relevés (1113833+3549=1117382)
-plot_data <- plot_data[is.finite(posit), ] # 1113833 relevés
+any(is.na(posit)) # TRUE: some relevÃ©s (n = 3549) in plot_data are not in sp_data anymore
+length(plot_data$plot_id[is.na(posit)]) # 3549 relevÃ©s (1113833+3549=1117382)
+plot_data <- plot_data[is.finite(posit), ] # 1113833 relevÃ©s
 posit <- match(plot_data$plot_id, sp_data$plot_id)
-any(is.na(posit)) # FALSE: all relevés in plot_data are also in sp_data
+any(is.na(posit)) # FALSE: all relevÃ©s in plot_data are also in sp_data
 
-# Computing species richness for each relevé
+# Computing species richness for each relevÃ©
 comm_list <- split(as.character(sp_data$sp_name), sp_data$plot_id)
 plot_data$sp_rich <- as.double(lapply(comm_list, function (x) length(unique(x))))
-any(is.na(plot_data$sp_rich)) # FALSE: all relevés in plot_data have at least 1 species in the community
+any(is.na(plot_data$sp_rich)) # FALSE: all relevÃ©s in plot_data have at least 1 species in the community
 min(plot_data$sp_rich) # 1 species in the community
 max(plot_data$sp_rich) # 662 species in the community: THIS IS HUGE!!!
-hist(plot_data$sp_rich) # There is clearly some outlier relevés in sPLot: how do they look like?
+hist(plot_data$sp_rich) # There is clearly some outlier relevÃ©s in sPLot: how do they look like?
 posit <- which(plot_data$sp_rich==max(plot_data$sp_rich)) # row 83295 
-plot_data$plot_id[posit] # Relevé number 83657
-comm_list[posit] # Looks like a very rich tropical plot but how big is this relevé (cf. its surface area)?
+plot_data$plot_id[posit] # RelevÃ© number 83657
+comm_list[posit] # Looks like a very rich tropical plot but how big is this relevÃ© (cf. its surface area)?
 ramp_hexbin <- colorRampPalette(rev(brewer.pal(11, 'Spectral')))
-hexbinplot(sp_rich~plot_lat, data=plot_data, trans=log, inv=exp, xbins=30, border="white", xlab="Latitude (°)", ylab="Species richness", colramp=ramp_hexbin) # Looks like a mid-domain effect!!!
+hexbinplot(sp_rich~plot_lat, data=plot_data, trans=log, inv=exp, xbins=30, border="white", xlab="Latitude (Â°)", ylab="Species richness", colramp=ramp_hexbin) # Looks like a mid-domain effect!!!
 
 # Computing community weighted means (CWMs) for some trait data
 posit <- match(sp_data$sp_name, trait_data$sp_name)
@@ -112,8 +112,8 @@ trait_list <- split(sp_data$SLA_mean, sp_data$plot_id)
 weight_list <- split(sp_data$rel_cov, sp_data$plot_id) 
 trait_list <- Map("*", trait_list, weight_list)
 plot_data$CWM_seff <- as.double(lapply(trait_list, function (x) length(x[is.finite(x)])))
-length(which(plot_data$CWM_seff<3)) #  68325 relevés for which the CWM value is based on less that three species
-length(which(plot_data$CWM_seff>2)) #  1045508 relevés for which the CWM value is based on more that two species
+length(which(plot_data$CWM_seff<3)) #  68325 relevÃ©s for which the CWM value is based on less that three species
+length(which(plot_data$CWM_seff>2)) #  1045508 relevÃ©s for which the CWM value is based on more that two species
 plot_data$SLA_mean <- as.double(lapply(trait_list, function (x) mean(x, na.rm=TRUE)))
 
 
@@ -126,11 +126,11 @@ trait_list <- split(sp_data$SD_mean, sp_data$plot_id)
 trait_list <- Map("*", trait_list, weight_list)
 plot_data$SD_mean <- as.double(lapply(trait_list, function (x) mean(x, na.rm=TRUE)))
 
-# Checking for relevés with identical coordinates (just for information) 
+# Checking for relevÃ©s with identical coordinates (just for information) 
 plot_data$lonlat_id <- paste(plot_data$plot_lon, plot_data$plot_lat, sep=":")
 length(unique(plot_data$lonlat_id)) # Only 523435 out of 1113833 (i.e. about 47%) have unique coordinates (cf. pseudoreplication in space is high but could potentially be different communities)
 
-# SHALL WE DO THAT: subsampling (randomly) one relevé out of those sharing exactly the same coordinates?
+# SHALL WE DO THAT: subsampling (randomly) one relevÃ© out of those sharing exactly the same coordinates?
 # uniq <- unique(plot_data$lonlat_id)
 # uniq_plot_list <- c()
 # for (i in 1:length(uniq)){
@@ -264,7 +264,7 @@ for (i in rev(1:length(code_biom))){
 }
 legend("bottomright", code_biom, fill=adjustcolor(ramp_biom, alpha.f=0.2), border=ramp_biom, bty="n", ncol=4)
 
-# Plotting the density of spatial units (cf. 30 arc-minute resoultion here) available worldwide and the density of sPlot relevés within each bioclimatic unit of the PC1-PC2 space
+# Plotting the density of spatial units (cf. 30 arc-minute resoultion here) available worldwide and the density of sPlot relevÃ©s within each bioclimatic unit of the PC1-PC2 space
 r <- raster(nrows=100, ncols=100, xmn=min(bioclim_wrld@data$pc1_val), xmx=max(bioclim_wrld@data$pc1_val), ymn=min(bioclim_wrld@data$pc2_val), ymx=max(bioclim_wrld@data$pc2_val))
 pca_wrld_r <- rasterize(bioclim_wrld@data[, c("pc1_val", "pc2_val")], r, fun="count")
 plot(log(pca_wrld_r), asp=0, col=rev(divPalette(n=100, name="RdBu")), main="Number (n) of 30 arc-minute cells per bin (log(n))", xlab="PC1", ylab="PC2")
@@ -273,10 +273,10 @@ plot_data$pc1_val <- extract(pc1_r, coordinates(plot_data))
 plot_data$pc2_val <- extract(pc2_r, coordinates(plot_data)) 
 pca_sPlot_r <- rasterize(plot_data@data[, c("pc1_val", "pc2_val")], r, fun="count")
 windows()
-plot(log(pca_sPlot_r), asp=0, col=rev(divPalette(n=100, name="RdBu")), main="Number (n) of sPlots relevés per bin (log(n))", xlab="PC1", ylab="PC2")
+plot(log(pca_sPlot_r), asp=0, col=rev(divPalette(n=100, name="RdBu")), main="Number (n) of sPlots relevÃ©s per bin (log(n))", xlab="PC1", ylab="PC2")
 convex_hull(bioclim_wrld@data$pc1_val, bioclim_wrld@data$pc2_val, fill= adjustcolor("grey", alpha.f=0.2), borcol="grey") 
 
-# Plotting for each bioclimatic unit of the PC1-PC2 space the ratio between the relative proportion of sPlot relevés and the relative proportion of spatial units available worldwide 
+# Plotting for each bioclimatic unit of the PC1-PC2 space the ratio between the relative proportion of sPlot relevÃ©s and the relative proportion of spatial units available worldwide 
 prop_wrld_r <- pca_wrld_r/max(getValues(pca_wrld_r), na.rm=T)
 prop_sPlot_r <- pca_sPlot_r/max(getValues(pca_sPlot_r), na.rm=T)
 plot(ratio_sPlot/ratio_wrld, asp=0, col=rev(divPalette(n=100, name="RdBu")), main="Oversampled (>1) and undersampled (<1) bioclimatic units", xlab="PC1", ylab="PC2")
@@ -310,6 +310,61 @@ plot(ncell_axis, ncell_samp/ncell_disp, ylim=c(0, 1))
 par(mfrow=c(1, 1))
 
 # Using the median statistic as the threshold for subsampling each grid cell of the PC1-PC2 space (100*100)
+
+library(reshape)
+library(Rcpp)
+library(bigmemory)
+
+# Build C++ fonctions
+sourceCpp("bray.part.C.cpp")
+sourceCpp("hcr.C.cpp")
+
+# R wrapper for BigBray C++ function
+BigBrayPart <- function(bigMat){
+    zeros <- big.matrix(nrow = nrow(bigMat),
+                        ncol = nrow(bigMat),
+                        init = 0,
+                        type = typeof(bigMat))
+    BigBray(bigMat@address, zeros@address)
+    return(zeros)
+}
+
+plot_data <- plot_data@data
+
+r <- raster(nrows=100, ncols=100, xmn=min(bioclim_wrld@data$pc1_val), xmx=max(bioclim_wrld@data$pc1_val), ymn=min(bioclim_wrld@data$pc2_val), ymx=max(bioclim_wrld@data$pc2_val))
+pca_sPlot_r <- rasterize(plot_data[, c("pc1_val", "pc2_val")], r, fun="count")
+
+cutoff<-median(values(pca_sPlot_r),na.rm=T)
+
+tempZoneOut <- coordinates(pca_sPlot_r) [which(values(pca_sPlot_r)>cutoff), ]
+plotToRemove <- NULL
+
+  for (i in 1:nrow(tempZoneOut)){
+
+  sel.plot <- which(plot_data$pc1_val > tempZoneOut[i,1]-(res(r)[1]/2) & 
+                    plot_data$pc1_val < tempZoneOut[i,1]+(res(r)[1]/2) &
+                    plot_data$pc2_val > tempZoneOut[i,2]-(res(r)[2]/2) & 
+                    plot_data$pc2_val < tempZoneOut[i,2] +(res(r)[2]/2))
+    
+  idZoneOut <- plot_data[sel.plot,"plot_id"]
+  
+  sel.comm <- sp_data[which(sp_data$plot_id %in% idZoneOut),c(1,4,5)]
+  comm.data <- cast(sel.comm, plot_id~sp_name, sum)
+  rowNames <- comm.data[,1]
+  colNames <- colnames(comm.data)
+  comm.data <- as.matrix(comm.data[,-1])
+  #Updata object attributes
+  class(comm.data) <- "matrix"
+  bigComMatrix <- as.big.matrix(comm.data)
+  brayBalDist <- BigBrayPart(bigComMatrix)
+  selectedPlot <- HcrCPP(brayBalDist@address, nout=cutoff, nsampl=1000)  
+  selectedPlot <- rowNames[selectedPlot] 
+  selectedPlotIndex <- which( idZoneOut %in%  selectedPlot)
+  plotToRemove <-  c(plotToRemove,idZoneOut[-selectedPlotIndex])
+  
+  }
+  
+  
 
 
 
