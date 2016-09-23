@@ -1,5 +1,3 @@
-# Script sPlot Jonathan & Tarek
-
 library(spdep)
 library(maptools)
 library(rgdal)
@@ -25,7 +23,7 @@ str(plot_data) # 1117382 relevés
 sp_data <- read.csv("data/plots_without_unified_cover_scales_20160120a.csv")
 str(sp_data) # 24241941 occurrences
 length(unique(sp_data$PlotObservationID)) # 1117940 relevés
-length(unique(sp_data$PlotObservationID))-length(unique(plot_data$plot_id) # 558 relevés in sp_data but missing from plot_data
+length(unique(sp_data$PlotObservationID))-length(unique(plot_data$plot_id)) # 558 relevés in sp_data but missing from plot_data
 posit <- match(sp_data$PlotObservationID, plot_data$plot_id)
 any(is.na(posit)) # TRUE: some relevés (n = 558) in sp_data are not in plot_data
 length(sp_data$PlotObservationID[is.na(posit)]) # 11369 rows in sp_data corresponding to the species lists of the 558 relevés missing from plot_data
@@ -152,8 +150,9 @@ data(wrld_simpl)
 plot(wrld_simpl)
 points(coordinates(plot_data), cex=0.1, col="red", pch=16)
 
-# cartogramme 
 
+
+# cartogramme 
 library(Rcartogram)
 library(getcartr)
 library(fftw)
@@ -316,7 +315,7 @@ seff_med <- c()
 seff_mean <- c()
 seff_max <- c()
 seff_min <- c() 
-for (i in 1:length(ncell_axis)){
+for (i in 1:length(res)){
   print(paste(i, "of", length(res), sep = " "))
   r <- raster(nrows=res[i], ncols=res[i], xmn=min(bioclim_wrld@data$pc1_val), xmx=max(bioclim_wrld@data$pc1_val), ymn=min(bioclim_wrld@data$pc2_val), ymx=max(bioclim_wrld@data$pc2_val))
   temp <- rasterize(bioclim_wrld@data[, c("pc1_val", "pc2_val")], r, fun="count")
@@ -332,15 +331,17 @@ par(mfrow=c(2, 2))
 plot(res, seff_med)
 plot(res, seff_max)
 plot(res, seff_mean)
-plot(ncell_axis, ncell_samp/ncell_disp, ylim=c(0, 1))
+plot(res, ncell_samp/ncell_disp, ylim=c(0, 1))
 par(mfrow=c(1, 1))
 
 # Using the median statistic as the threshold for subsampling each grid cell of the PC1-PC2 space (100*100)
 
 library(Rcpp)
 library(bigmemory)
+library(RcppArmadillo)
 
 # Build C++ fonctions
+setwd("C:/Users/Admin/Desktop/sPlot2.0 database 08.08.2016/Cpp functions")
 sourceCpp("bray.part.C.cpp")
 sourceCpp("hcr.C.cpp")
 sourceCpp("cast.cpp")
@@ -383,8 +384,8 @@ tempZoneOut <- coordinates(pca_sPlot_r) [which(values(pca_sPlot_r)>cutoff), ]
                     plot_data$pc2_val > tempZoneOut[i,2]-(res(r)[2]/2) & 
                     plot_data$pc2_val < tempZoneOut[i,2] +(res(r)[2]/2))
     
-  idZoneOut <- plot_data[sel.plot,"plot_id"]
-  sel.comm <- sp_data[which(sp_data$plot_id %in% idZoneOut),c(1,4,5)]
+  idZoneOut <- plot_data[sel.plot, "plot_id"]
+  sel.comm <- sp_data[which(sp_data$plot_id %in% idZoneOut),c("plot_id", "sp_name", "rel_cov")]
   sel.comm<-na.omit(sel.comm)
   sel.comm[,2]<-factor(sel.comm[,2], labels=seq(1:length(unique(sel.comm[,2])))) 
   sel.comm[,2]<-as.numeric(sel.comm[,2])
@@ -393,9 +394,7 @@ tempZoneOut <- coordinates(pca_sPlot_r) [which(values(pca_sPlot_r)>cutoff), ]
   comm.data <- comm.data[,-1]
   gc()
   if (nrow(comm.data)>9000) {bigComMatrix <- as.big.matrix(comm.data,shared=FALSE,backingfile=paste("Matrix_",i,sep=""),backingpath=getwd(),descriptorfile=paste("Matrix_",i,".desc",sep=""))
-  brayBalDist <- BigBrayPart2(bigComMatrix)}
-  else { bigComMatrix <- as.big.matrix(comm.data)
-  brayBalDist <- BigBrayPart1(bigComMatrix)}
+  brayBalDist <- BigBrayPart2(bigComMatrix)} else {bigComMatrix <- as.big.matrix(comm.data) ; brayBalDist <- BigBrayPart1(bigComMatrix)}
   selectedPlot <- HcrCPP(brayBalDist@address, nout=cutoff, nsampl=1000)  
   selectedPlot <- rowNames[selectedPlot] 
   selectedPlotIndex <- which( idZoneOut %in%  selectedPlot)
