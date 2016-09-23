@@ -1,3 +1,5 @@
+# Script sPlot Jonathan & Tarek
+
 library(spdep)
 library(maptools)
 library(rgdal)
