@@ -335,13 +335,13 @@ par(mfrow=c(1, 1))
 
 # Using the median statistic as the threshold for subsampling each grid cell of the PC1-PC2 space (100*100)
 
-library(reshape)
 library(Rcpp)
 library(bigmemory)
 
 # Build C++ fonctions
 sourceCpp("bray.part.C.cpp")
 sourceCpp("hcr.C.cpp")
+sourceCpp("cast.cpp")
 
 # R wrapper for BigBray C++ function
 BigBrayPart <- function(bigMat){
@@ -362,30 +362,29 @@ cutoff<-median(values(pca_sPlot_r),na.rm=T)
 
 tempZoneOut <- coordinates(pca_sPlot_r) [which(values(pca_sPlot_r)>cutoff), ]
 plotToRemove <- NULL
-
   for (i in 1:nrow(tempZoneOut)){
-
   sel.plot <- which(plot_data$pc1_val > tempZoneOut[i,1]-(res(r)[1]/2) & 
                     plot_data$pc1_val < tempZoneOut[i,1]+(res(r)[1]/2) &
                     plot_data$pc2_val > tempZoneOut[i,2]-(res(r)[2]/2) & 
                     plot_data$pc2_val < tempZoneOut[i,2] +(res(r)[2]/2))
     
   idZoneOut <- plot_data[sel.plot,"plot_id"]
-  
   sel.comm <- sp_data[which(sp_data$plot_id %in% idZoneOut),c(1,4,5)]
-  comm.data <- cast(sel.comm, plot_id~sp_name, sum)
+  sel.comm<-na.omit(sel.comm)
+  sel.comm[,2]<-factor(sel.comm[,2], labels=seq(1:length(unique(sel.comm[,2])))) 
+  sel.comm[,2]<-as.numeric(sel.comm[,2])
+  comm.data <- castC(iD=sel.comm[,1], sp=sel.comm[,2],cov=sel.comm[,3])
   rowNames <- comm.data[,1]
-  colNames <- colnames(comm.data)
-  comm.data <- as.matrix(comm.data[,-1])
-  #Updata object attributes
-  class(comm.data) <- "matrix"
+  comm.data <- comm.data[,-1]
+  gc()
   bigComMatrix <- as.big.matrix(comm.data)
   brayBalDist <- BigBrayPart(bigComMatrix)
   selectedPlot <- HcrCPP(brayBalDist@address, nout=cutoff, nsampl=1000)  
   selectedPlot <- rowNames[selectedPlot] 
   selectedPlotIndex <- which( idZoneOut %in%  selectedPlot)
   plotToRemove <-  c(plotToRemove,idZoneOut[-selectedPlotIndex])
-  
+  print(paste(round(i/nrow(tempZoneOut)*100,1),"%","    i =" ,i,sep=""))	
+  save(plotToRemove ,file="plotToRemove.RData")
   }
   
   
