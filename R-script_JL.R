@@ -344,11 +344,24 @@ sourceCpp("hcr.C.cpp")
 sourceCpp("cast.cpp")
 
 # R wrapper for BigBray C++ function
-BigBrayPart <- function(bigMat){
+BigBrayPart1 <- function(bigMat){
     zeros <- big.matrix(nrow = nrow(bigMat),
                         ncol = nrow(bigMat),
                         init = 0,
                         type = typeof(bigMat))
+    BigBray(bigMat@address, zeros@address)
+    return(zeros)
+}
+
+BigBrayPart2 <- function(bigMat){
+    zeros <- big.matrix(nrow = nrow(bigMat),
+                        ncol = nrow(bigMat),
+                        init = 0,
+                        type = typeof(bigMat),
+			shared=FALSE,
+			backingfile=paste("BrayMatrix_",i,sep=""),
+			backingpath=getwd(),
+			descriptorfile=paste("BrayMatrix_",i,".desc",sep=""))
     BigBray(bigMat@address, zeros@address)
     return(zeros)
 }
@@ -361,7 +374,7 @@ pca_sPlot_r <- rasterize(plot_data[, c("pc1_val", "pc2_val")], r, fun="count")
 cutoff<-median(values(pca_sPlot_r),na.rm=T)
 
 tempZoneOut <- coordinates(pca_sPlot_r) [which(values(pca_sPlot_r)>cutoff), ]
-plotToRemove <- NULL
+  plotToRemove <- NULL
   for (i in 1:nrow(tempZoneOut)){
   sel.plot <- which(plot_data$pc1_val > tempZoneOut[i,1]-(res(r)[1]/2) & 
                     plot_data$pc1_val < tempZoneOut[i,1]+(res(r)[1]/2) &
@@ -377,14 +390,16 @@ plotToRemove <- NULL
   rowNames <- comm.data[,1]
   comm.data <- comm.data[,-1]
   gc()
-  bigComMatrix <- as.big.matrix(comm.data)
-  brayBalDist <- BigBrayPart(bigComMatrix)
+  if (nrow(comm.data)>9000) {bigComMatrix <- as.big.matrix(comm.data,shared=FALSE,backingfile=paste("Matrix_",i,sep=""),backingpath=getwd(),descriptorfile=paste("Matrix_",i,".desc",sep=""))
+  brayBalDist <- BigBrayPart2(bigComMatrix)}
+  else { bigComMatrix <- as.big.matrix(comm.data)
+  brayBalDist <- BigBrayPart1(bigComMatrix)}
   selectedPlot <- HcrCPP(brayBalDist@address, nout=cutoff, nsampl=1000)  
   selectedPlot <- rowNames[selectedPlot] 
   selectedPlotIndex <- which( idZoneOut %in%  selectedPlot)
   plotToRemove <-  c(plotToRemove,idZoneOut[-selectedPlotIndex])
-  print(paste(round(i/nrow(tempZoneOut)*100,1),"%","    i =" ,i,sep=""))	
-  save(plotToRemove ,file="plotToRemove.RData")
+  print(paste(round(i/nrow(tempZoneOut)*100,1),"%","    i =" ,i,sep=""))
+  save(plotToRemove ,file="plotToRemove.RData")		
   }
   
   
