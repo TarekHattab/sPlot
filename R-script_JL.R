@@ -388,7 +388,7 @@ tempZoneOut <- coordinates(pca_sPlot_r) [which(values(pca_sPlot_r)>cutoff), ]
   rowNames <- comm.data[,1]
   comm.data <- comm.data[,-1]
   gc()
-   if (nrow(comm.data)>9000) {bigComMatrix <- as.big.matrix(comm.data,shared=FALSE,backingfile=paste("Matrix_",i,sep=""),backingpath=getwd(),descriptorfile=paste("Matrix_",i,".desc",sep="")) ; brayBalDist <- BigBrayPart(bigComMatrix)}
+   if (nrow(comm.data)>20000) {bigComMatrix <- as.big.matrix(comm.data,shared=FALSE,backingfile=paste("Matrix_",i,sep=""),backingpath=getwd(),descriptorfile=paste("Matrix_",i,".desc",sep="")) ; brayBalDist <- BigBrayPart(bigComMatrix)}
   else { brayBalDist <- bray_distance_RcppParallel(comm.data); brayBalDist <- as.big.matrix(brayBalDist)}
   selectedPlot <- HcrCPP(brayBalDist@address, nout=cutoff, nsampl=1000)  
   selectedPlot <- rowNames[selectedPlot] 
