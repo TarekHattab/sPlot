@@ -339,24 +339,19 @@ par(mfrow=c(1, 1))
 library(Rcpp)
 library(bigmemory)
 library(RcppArmadillo)
+library(RcppParallel)
+	
+Sys.setenv("PKG_CXXFLAGS"="-fopenmp")
 
 # Build C++ fonctions
 setwd("C:/Users/Admin/Desktop/sPlot2.0 database 08.08.2016/Cpp functions")
-sourceCpp("bray.part.C.cpp")
+sourceCpp("bray.part.OpenMP.cpp")
+sourceCpp("bray.part.C_RcppParallel.cpp")
 sourceCpp("hcr.C.cpp")
 sourceCpp("cast.cpp")
 
 # R wrapper for BigBray C++ function
-BigBrayPart1 <- function(bigMat){
-    zeros <- big.matrix(nrow = nrow(bigMat),
-                        ncol = nrow(bigMat),
-                        init = 0,
-                        type = typeof(bigMat))
-    BigBray(bigMat@address, zeros@address)
-    return(zeros)
-}
-
-BigBrayPart2 <- function(bigMat){
+BigBrayPart <- function(bigMat){
     zeros <- big.matrix(nrow = nrow(bigMat),
                         ncol = nrow(bigMat),
                         init = 0,
@@ -365,7 +360,7 @@ BigBrayPart2 <- function(bigMat){
 			backingfile=paste("BrayMatrix_",i,sep=""),
 			backingpath=getwd(),
 			descriptorfile=paste("BrayMatrix_",i,".desc",sep=""))
-    BigBray(bigMat@address, zeros@address)
+    bray_distance_OpenMP(bigMat@address, zeros@address)
     return(zeros)
 }
 
@@ -393,14 +388,15 @@ tempZoneOut <- coordinates(pca_sPlot_r) [which(values(pca_sPlot_r)>cutoff), ]
   rowNames <- comm.data[,1]
   comm.data <- comm.data[,-1]
   gc()
-  if (nrow(comm.data)>9000) {bigComMatrix <- as.big.matrix(comm.data,shared=FALSE,backingfile=paste("Matrix_",i,sep=""),backingpath=getwd(),descriptorfile=paste("Matrix_",i,".desc",sep=""))
-  brayBalDist <- BigBrayPart2(bigComMatrix)} else {bigComMatrix <- as.big.matrix(comm.data) ; brayBalDist <- BigBrayPart1(bigComMatrix)}
+   if (nrow(comm.data)>9000) {bigComMatrix <- as.big.matrix(comm.data,shared=FALSE,backingfile=paste("Matrix_",i,sep=""),backingpath=getwd(),descriptorfile=paste("Matrix_",i,".desc",sep="")) ; brayBalDist <- BigBrayPart(bigComMatrix)}
+  else { brayBalDist <- bray_distance_RcppParallel(comm.data); brayBalDist <- as.big.matrix(brayBalDist)}
   selectedPlot <- HcrCPP(brayBalDist@address, nout=cutoff, nsampl=1000)  
   selectedPlot <- rowNames[selectedPlot] 
   selectedPlotIndex <- which( idZoneOut %in%  selectedPlot)
   plotToRemove <-  c(plotToRemove,idZoneOut[-selectedPlotIndex])
   print(paste(round(i/nrow(tempZoneOut)*100,1),"%","    i =" ,i,sep=""))
-  save(plotToRemove ,file="plotToRemove.RData")		
+  output<-list(i,plotToRemove)
+  save(output ,file="plotToRemove.RData")	
   }
   
   
